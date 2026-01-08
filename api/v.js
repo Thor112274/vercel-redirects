@@ -1,13 +1,14 @@
 export default function handler(req, res) {
   try {
-    const SECRET_KEY = "sM3WQvFq9e1D8A7NnH8JcP2X6KkYB9RZsU5V4x"; // SAME as info.pyok
+    // 🔐 SAME SECRET KEY AS info.py
+    const SECRET_KEY = "V3r1fY#MLZ@2026!X9AqP";
 
     const { d } = req.query;
     if (!d) {
       return res.status(400).send("Invalid Request");
     }
 
-    // Decode base64 token
+    // Decode encrypted data
     const decoded = Buffer.from(d, "base64").toString("utf-8");
     const parts = decoded.split("|");
 
@@ -15,7 +16,7 @@ export default function handler(req, res) {
       return res.status(400).send("Invalid Token");
     }
 
-    const [redirectUrl, userId, expireAt, key] = parts;
+    const [botUrl, userId, expireAt, key] = parts;
 
     // Secret key validation
     if (key !== SECRET_KEY) {
@@ -28,8 +29,20 @@ export default function handler(req, res) {
       return res.status(410).send("Link Expired");
     }
 
-    // ✅ All checks passed → redirect
-    return res.redirect(302, redirectUrl);
+    /*
+      🔥 SHORTENER FIRST FLOW
+      Shortener must redirect to ?redirect=BOT_URL
+    */
+
+    const SHORTENER_DOMAIN = "https://arolinks.com";
+
+    const shortenerLink =
+      SHORTENER_DOMAIN +
+      "?redirect=" +
+      encodeURIComponent(botUrl);
+
+    // Redirect user to shortener
+    return res.redirect(302, shortenerLink);
 
   } catch (err) {
     return res.status(500).send("Server Error");
