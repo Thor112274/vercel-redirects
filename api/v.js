@@ -1,7 +1,7 @@
 export default function handler(req, res) {
   try {
     // 🔐 SAME SECRET KEY AS info.py
-    const SECRET_KEY = "V3r1fY#MLZ@2026!X9AqP";
+    const SECRET_KEY = "sM3WQvFq9e1D8A7NnH8JcP2X6KkYB9RZsU5V4x";
 
     const { d } = req.query;
     if (!d) {
