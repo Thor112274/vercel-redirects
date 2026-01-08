@@ -1,6 +1,6 @@
 export default function handler(req, res) {
   try {
-    const SECRET_KEY = "sM3WQvFq9e1D8A7NnH8JcP2X6KkYB9RZsU5V4x"; // SAME as info.py
+    const SECRET_KEY = "sM3WQvFq9e1D8A7NnH8JcP2X6KkYB9RZsU5V4x"; // SAME as info.pyok
 
     const { d } = req.query;
     if (!d) {
