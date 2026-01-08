@@ -1,22 +1,23 @@
 import crypto from "crypto";
 
+const SECRET_KEY = "sM3WQvFq9e1D8A7NnH8JcP2X6KkYB9RZsU5V4x";
 const BOT_USERNAME = "link_sharingg_bot"; // without @
-const SECRET_KEY = process.env.SECRET_KEY;
 
 function verifyToken(token) {
   try {
     const raw = Buffer.from(token, "base64url").toString();
     const [data, signature] = raw.split(".");
 
-    const expected = crypto
+    const expectedSig = crypto
       .createHmac("sha256", SECRET_KEY)
       .update(data)
       .digest("hex");
 
-    if (signature !== expected) return null;
+    if (signature !== expectedSig) return null;
 
     const payload = JSON.parse(data);
 
+    // ⏳ Expiry check
     if (Date.now() / 1000 > payload.e) return null;
 
     return payload;
@@ -27,18 +28,28 @@ function verifyToken(token) {
 
 export default function handler(req, res) {
   const { token } = req.query;
-  if (!token) return res.status(403).send("Invalid Request");
 
-  const payload = verifyToken(token);
-  if (!payload) return res.status(403).send("Verification Failed");
-
-  const ua = (req.headers["user-agent"] || "").toLowerCase();
-  if (["bot", "curl", "wget", "python"].some(x => ua.includes(x))) {
-    return res.status(403).send("Bot Access Denied");
+  if (!token) {
+    return res.status(403).send("❌ Invalid Request");
   }
 
+  const payload = verifyToken(token);
+  if (!payload) {
+    return res.status(403).send("❌ Verification Failed or Expired");
+  }
+
+  // 🛡 Anti-bot User-Agent check
+  const ua = (req.headers["user-agent"] || "").toLowerCase();
+  const blocked = ["bot", "curl", "wget", "python", "httpx"];
+  if (blocked.some(b => ua.includes(b))) {
+    return res.status(403).send("❌ Bot Access Denied");
+  }
+
+  const user_id = payload.u;
+
+  // ✅ Redirect to Telegram
   res.writeHead(302, {
-    Location: `https://t.me/${BOT_USERNAME}?start=verified_${payload.u}`
+    Location: `https://t.me/${BOT_USERNAME}?start=verified_${user_id}`,
   });
   res.end();
 }
