@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/verify.js": {
+    "api/v.js": {
       "runtime": "nodejs18.x"
     }
   }
