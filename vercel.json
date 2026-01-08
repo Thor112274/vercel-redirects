@@ -1,8 +1,7 @@
 {
-  "routes": [
-    {
-      "src": "/verify/(.*)",
-      "dest": "/api/verify?token=$1"
+  "functions": {
+    "api/verify.js": {
+      "runtime": "nodejs18.x"
     }
-  ]
+  }
 }
