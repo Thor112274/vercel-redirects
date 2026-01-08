@@ -1,55 +1,37 @@
-import crypto from "crypto";
-
-const SECRET_KEY = "sM3WQvFq9e1D8A7NnH8JcP2X6KkYB9RZsU5V4x";
-const BOT_USERNAME = "link_sharingg_bot"; // without @
-
-function verifyToken(token) {
-  try {
-    const raw = Buffer.from(token, "base64url").toString();
-    const [data, signature] = raw.split(".");
-
-    const expectedSig = crypto
-      .createHmac("sha256", SECRET_KEY)
-      .update(data)
-      .digest("hex");
-
-    if (signature !== expectedSig) return null;
-
-    const payload = JSON.parse(data);
-
-    // ⏳ Expiry check
-    if (Date.now() / 1000 > payload.e) return null;
-
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
 export default function handler(req, res) {
-  const { token } = req.query;
+  try {
+    const SECRET_KEY = "MovieLoverzz_2026@SecureKey"; // SAME as info.py
 
-  if (!token) {
-    return res.status(403).send("❌ Invalid Request");
+    const { d } = req.query;
+    if (!d) {
+      return res.status(400).send("Invalid Request");
+    }
+
+    // Decode base64 token
+    const decoded = Buffer.from(d, "base64").toString("utf-8");
+    const parts = decoded.split("|");
+
+    if (parts.length !== 4) {
+      return res.status(400).send("Invalid Token");
+    }
+
+    const [redirectUrl, userId, expireAt, key] = parts;
+
+    // Secret key validation
+    if (key !== SECRET_KEY) {
+      return res.status(403).send("Unauthorized");
+    }
+
+    // Expiry validation
+    const now = Math.floor(Date.now() / 1000);
+    if (now > Number(expireAt)) {
+      return res.status(410).send("Link Expired");
+    }
+
+    // ✅ All checks passed → redirect
+    return res.redirect(302, redirectUrl);
+
+  } catch (err) {
+    return res.status(500).send("Server Error");
   }
-
-  const payload = verifyToken(token);
-  if (!payload) {
-    return res.status(403).send("❌ Verification Failed or Expired");
-  }
-
-  // 🛡 Anti-bot User-Agent check
-  const ua = (req.headers["user-agent"] || "").toLowerCase();
-  const blocked = ["bot", "curl", "wget", "python", "httpx"];
-  if (blocked.some(b => ua.includes(b))) {
-    return res.status(403).send("❌ Bot Access Denied");
-  }
-
-  const user_id = payload.u;
-
-  // ✅ Redirect to Telegram
-  res.writeHead(302, {
-    Location: `https://t.me/${BOT_USERNAME}?start=verified_${user_id}`,
-  });
-  res.end();
 }
